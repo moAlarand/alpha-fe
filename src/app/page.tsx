@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import alphaLogo from "./images/alpha.webp";
-import { Stock } from "./types";
+import { Stock, Technical } from "./types";
 import Image from "next/image";
 import { stockAttributes } from "./stockAttributes";
 import { getEGXAllStockData } from "./api";
+import { getStrongRecommendation } from "./recomandation";
 
 export default function Home() {
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -90,6 +91,29 @@ export default function Home() {
     setFilteredStocks(stocks); // Reset filtered stocks to the full list
   };
 
+  const handleRecommendedToBuy = () => {
+    setSearch("");
+    setSortBy(null);
+    setSortDirection("asc");
+
+    setFilteredStocks(
+      stocks.filter(
+        (stock) => getStrongRecommendation(stock) === Technical.STRONG_BUY
+      )
+    );
+  };
+
+  const handleRecommendedToSell = () => {
+    setSearch("");
+    setSortBy(null);
+    setSortDirection("asc");
+    setFilteredStocks(
+      stocks.filter(
+        (stock) => getStrongRecommendation(stock) === Technical.STRONG_SELL
+      )
+    );
+  };
+
   return (
     <div
       className="container mx-auto p-4 bg-white border text-black  overflow-x-auto"
@@ -113,6 +137,21 @@ export default function Home() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={handleRecommendedToBuy}
+        >
+          توصيات بالشراء
+        </button>
+
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded"
+          onClick={handleRecommendedToSell}
+        >
+          توصيات بالبيع
+        </button>
+
         {/* Reset button */}
         <button
           className="bg-red-500 text-white px-4 py-2 rounded"
