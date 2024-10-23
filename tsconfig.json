@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "src", // Change 'src' to your source directory if it's different
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
