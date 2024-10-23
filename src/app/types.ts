@@ -47,4 +47,11 @@ export interface Stock {
   Time: string; //'1728386219';
   Url: string; //'/equities/rowad-tourism';
   Volume: number; //1047;
+
+  // amount of purchased stocks
+  amount: number;
+  // unique key
+  key: number;
+  // prev price
+  purchasePrice: number;
 }

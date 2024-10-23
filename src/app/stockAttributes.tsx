@@ -66,6 +66,66 @@ export const stockAttributes = [
     ),
     key: "Recommendation",
   },
+  {
+    label: "اسهمي",
+    value: (stock: Stock) => stock.amount || "-",
+    key: "myAmount",
+  },
+
+  {
+    label: "الربح والخسارة",
+    value: (stock: Stock) => {
+      const profitLoss = (stock.Last - stock.purchasePrice) * stock.amount;
+      const formattedProfitLoss = isNaN(profitLoss)
+        ? "-"
+        : profitLoss.toFixed(2);
+
+      if (isNaN(profitLoss)) {
+        return "-";
+      }
+
+      const isProfit = profitLoss > 0;
+      const color = isProfit ? "green" : "red";
+      const arrow = isProfit ? "↑" : "↓";
+
+      return (
+        <span style={{ color }}>
+          {formattedProfitLoss} {arrow}
+        </span>
+      );
+    },
+    key: "profitLoss",
+  },
+  {
+    label: "العمليه",
+    value: (stock: Stock, refresh: () => void) => (
+      <button
+        className={`bg-${
+          stock.key ? "red" : "green"
+        }-500 text-white px-5 py-3 rounded`}
+        onClick={() => {
+          let stocks: Stock[] = [];
+          const stocksString = localStorage.getItem("stocks");
+          if (stocksString) {
+            stocks = JSON.parse(stocksString);
+          }
+          if (stock.key) {
+            stocks = stocks.filter((s) => s.key !== stock.key);
+          } else {
+            stock.amount = Number(prompt("عدد الاسهم"));
+            stock.key = new Date().getMilliseconds();
+            stock.purchasePrice = stock.Last;
+            stocks.push(stock);
+          }
+          localStorage.setItem("stocks", JSON.stringify(stocks));
+          if (refresh) refresh();
+        }}
+      >
+        {stock.amount ? "بيع" : "شراء"}
+      </button>
+    ),
+    key: "save",
+  },
 ];
 
 // Function to get recommendation icon and color based on recommendation
@@ -77,30 +137,30 @@ const GetRecommendationIcon = ({
   switch (recommendation) {
     case Technical.BUY:
       return (
-        <div className="flex flex-row items-center space-y-2">
-          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-green-500 text-green-500" />
+        <div className="flex flex-row items-center space-y-2 text-green-500">
+          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-green-500 text-green-500" />
           شراء
         </div>
       );
     case Technical.STRONG_BUY:
       return (
-        <div className="flex flex-row items-center space-y-2">
-          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-green-500" />
-          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-green-500" />
+        <div className="flex flex-row items-center space-y-2 text-green-500">
+          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-green-500" />
+          <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-green-500" />
           شراء
         </div>
       );
 
     case Technical.SELL:
       return (
-        <div className="flex flex-row items-center space-y-2">
+        <div className="flex flex-row items-center space-y-2 text-red-500">
           <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-red-500 text-red-500" />
           بيع
         </div>
       );
     case Technical.STRONG_SELL:
       return (
-        <div className="flex flex-row items-center space-y-2">
+        <div className="flex flex-row items-center space-y-2 text-red-500">
           <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-red-500" />
           <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-red-500" />
           بيع

@@ -19,6 +19,7 @@ export default function Home() {
     const data: Stock[] = await getEGXAllStockData();
     setStocks(data);
   };
+
   // refresh
 
   // Initial fetch and refresh every 10 seconds
@@ -152,6 +153,17 @@ export default function Home() {
           توصيات بالبيع
         </button>
 
+        <button
+          className="bg-yellow-500 text-white px-4 py-2 rounded"
+          onClick={() => {
+            const stocksString = localStorage.getItem("stocks");
+            const MyStocks = stocksString ? JSON.parse(stocksString) : [];
+            setFilteredStocks(MyStocks);
+          }}
+        >
+          اسهمي
+        </button>
+
         {/* Reset button */}
         <button
           className="bg-red-500 text-white px-4 py-2 rounded"
@@ -199,7 +211,13 @@ export default function Home() {
                   }`}
                 >
                   {attr.isChange ? (attr.isPercentage ? " % " : " ج ") : ""}
-                  {attr.value(stock)}
+                  {attr.value(stock, () => {
+                    const stocksString = localStorage.getItem("stocks");
+                    const MyStocks = stocksString
+                      ? JSON.parse(stocksString)
+                      : [];
+                    setFilteredStocks(MyStocks);
+                  })}
                 </td>
               ))}
             </tr>
