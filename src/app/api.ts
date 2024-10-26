@@ -1,4 +1,4 @@
-import { Stock } from "./types";
+import { Stock } from "./stocks/types";
 
 // Fetch Egyptian stock data
 export const getEGXAllStockData = async (): Promise<Stock[]> => {
