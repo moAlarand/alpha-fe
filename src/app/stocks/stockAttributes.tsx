@@ -2,6 +2,7 @@ import moment from "moment";
 
 import { getStrongRecommendation } from "./recomandation";
 import { Stock, Technical } from "./types";
+import { createClient } from "utils/supabase/client";
 
 const StockTechnicalStatusTranslate = {
   [Technical.NEUTRAL]: "محايد",
@@ -103,21 +104,21 @@ export const stockAttributes = [
         className={`bg-${
           stock.key ? "red" : "green"
         }-500 text-white px-5 py-3 rounded`}
-        onClick={() => {
-          let stocks: Stock[] = [];
-          const stocksString = localStorage.getItem("stocks");
-          if (stocksString) {
-            stocks = JSON.parse(stocksString);
+        onClick={async () => {
+          const supabase = createClient();
+          try {
+            if (stock.key) {
+              await supabase.from("stocks").delete().eq("key", stock.key);
+            } else {
+              stock.amount = Number(prompt("عدد الاسهم"));
+              stock.key = new Date().getMilliseconds();
+              stock.purchasePrice = stock.Last;
+              stock.prevRecommend = getStrongRecommendation(stock);
+              await supabase.from("stocks").insert(stock);
+            }
+          } catch (e) {
+            console.log("🚀 ~ onClick={ ~ e:", e);
           }
-          if (stock.key) {
-            stocks = stocks.filter((s) => s.key !== stock.key);
-          } else {
-            stock.amount = Number(prompt("عدد الاسهم"));
-            stock.key = new Date().getMilliseconds();
-            stock.purchasePrice = stock.Last;
-            stocks.push(stock);
-          }
-          localStorage.setItem("stocks", JSON.stringify(stocks));
           if (refresh) refresh();
         }}
       >

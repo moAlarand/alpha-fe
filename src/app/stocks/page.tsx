@@ -1,20 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
-import alphaLogo from "./images/alpha.webp";
+import alphaLogo from "../images/alpha.webp";
 import { Stock, Technical } from "./types";
 import Image from "next/image";
 import { stockAttributes } from "./stockAttributes";
 import { getEGXAllStockData } from "../api";
 import { getStrongRecommendation } from "./recomandation";
-
+import Link from "next/link";
+import { createClient } from "../../utils/supabase/client";
+import Avatar from "app/account/avatar";
 
 export default function Home() {
+  const [profile, setProfile] = useState<{
+    full_name: string;
+    id: string;
+    avatar_url: string;
+  } | null>(null);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<Stock[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
 
   // Function to fetch stock data
   const fetchStockData = async () => {
@@ -22,8 +28,24 @@ export default function Home() {
     setStocks(data);
   };
 
+  // my stock
+  const getUserStocks = async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: myStocks } = await supabase
+      .from("stocks")
+      .select("*")
+      .eq("user_id", user?.id);
+    setFilteredStocks(
+      (myStocks as Stock[]).map((s) => {
+        const nS = stocks.find((fs) => s.Id === fs.Id);
+        return { ...s, ...nS };
+      })
+    );
+  };
   // refresh
-
   // Initial fetch and refresh every 10 seconds
   useEffect(() => {
     fetchStockData(); // Initial fetch
@@ -31,6 +53,15 @@ export default function Home() {
       fetchStockData(); // Refresh every 10 seconds
     }, 10000);
     return () => clearInterval(inter); // Cleanup
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("profiles").select("*");
+      setProfile(data?.[0]);
+      console.log("🚀 ~ data:", data);
+    })();
   }, []);
 
   // Filtering stocks
@@ -122,7 +153,16 @@ export default function Home() {
       className="container mx-auto p-4 bg-white border text-black  overflow-x-auto"
       dir="rtl"
     >
-      <div className="flex justify-center ">
+      <div className="flex justify-end ">
+        <Link href={"/account"}>
+          <Avatar
+            uid={profile?.id ?? null}
+            url={profile?.avatar_url ?? null}
+            size={60}
+          />
+        </Link>
+      </div>
+      <div className="flex justify-center">
         <div className="flex justify-center">
           <h3 className="text-4xl font-bold text-right">السوق المصري </h3>
         </div>
@@ -157,11 +197,7 @@ export default function Home() {
 
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded"
-          onClick={() => {
-            const stocksString = localStorage.getItem("stocks");
-            const MyStocks = stocksString ? JSON.parse(stocksString) : [];
-            setFilteredStocks(MyStocks);
-          }}
+          onClick={getUserStocks}
         >
           اسهمي
         </button>
@@ -213,13 +249,7 @@ export default function Home() {
                   }`}
                 >
                   {attr.isChange ? (attr.isPercentage ? " % " : " ج ") : ""}
-                  {attr.value(stock, () => {
-                    const stocksString = localStorage.getItem("stocks");
-                    const MyStocks = stocksString
-                      ? JSON.parse(stocksString)
-                      : [];
-                    setFilteredStocks(MyStocks);
-                  })}
+                  {attr.value(stock, getUserStocks)}
                 </td>
               ))}
             </tr>

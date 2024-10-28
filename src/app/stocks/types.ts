@@ -54,4 +54,8 @@ export interface Stock {
   key: number;
   // prev price
   purchasePrice: number;
+  // owner of stocks
+  user_id: string;
+  //prev Recommend
+  prevRecommend: Technical;
 }
