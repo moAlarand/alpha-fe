@@ -1,3 +1,4 @@
+import { supabase } from "utils/supabase/client";
 import { Stock, Technical } from "./types";
 
 export const getStrongRecommendation = (stock: Stock): Technical => {
@@ -78,4 +79,26 @@ export const getStrongRecommendation = (stock: Stock): Technical => {
 
   // Default recommendation
   return Technical.NEUTRAL; // Indicates no strong action is recommended
+};
+
+// Function to update currentRecommend in Supabase
+export const updateCurrentRecommend = async (
+  stockId: string,
+  newRecommendation: Technical
+) => {
+  console.log("🚀 ~ newRecommendation:", newRecommendation);
+  try {
+    const { data, error } = await supabase
+      .from("stocks")
+      .update({ currentRecommend: newRecommendation })
+      .eq("Id", stockId);
+
+    if (error) {
+      console.error("Error updating currentRecommend:", error);
+    } else {
+      console.log("currentRecommend updated successfully:", data);
+    }
+  } catch (err) {
+    console.error("Error in updateCurrentRecommend:", err);
+  }
 };

@@ -5,7 +5,10 @@ import { Stock, Technical } from "./types";
 import Image from "next/image";
 import { stockAttributes } from "./stockAttributes";
 import { getEGXAllStockData } from "../api";
-import { getStrongRecommendation } from "./recomandation";
+import {
+  getStrongRecommendation,
+  updateCurrentRecommend,
+} from "./recomandation";
 import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
@@ -24,8 +27,29 @@ export default function Home() {
 
   // Function to fetch stock data
   const fetchStockData = async () => {
-    const data: Stock[] = await getEGXAllStockData();
-    setStocks(data);
+    try {
+      const data: Stock[] = await getEGXAllStockData();
+      setStocks(data);
+      // Fetch stocks with currentRecommend from the database
+      const { data: dbStocks, error: dbError } = await supabase
+        .from("stocks")
+        .select("Id, currentRecommend");
+
+      if (dbError) throw dbError;
+
+      // Update each stock's recommendation if there's a change
+      data.forEach((stock) => {
+        const dbStock = dbStocks?.find((s) => s.Id === stock.Id);
+        const recommendation = getStrongRecommendation(stock); // Get new recommendation
+        if (dbStock && dbStock.currentRecommend !== recommendation) {
+          updateCurrentRecommend(stock.Id, recommendation); // Only update if recommendation has changed
+        }
+      });
+
+      setStocks(data); // Update local state with latest fetched data
+    } catch (error) {
+      console.error("Error fetching or updating stock data:", error);
+    }
   };
 
   // my stock
@@ -215,7 +239,7 @@ export default function Home() {
           <tr className="bg-slate-100">
             {stockAttributes.map((attr) => (
               <th
-                key={attr.label}
+                key={attr.label + attr.key}
                 onClick={() => handleSort(attr.key as keyof Stock)}
                 className={`py-2 px-4 border-b text-gray-700 text-right cursor-pointer ${
                   sortBy === attr.key
@@ -232,10 +256,13 @@ export default function Home() {
         </thead>
         <tbody>
           {filteredStocks.map((stock) => (
-            <tr key={stock.Id} className="hover:bg-gray-100">
+            <tr
+              key={stock.Id + stock.key + stock.Name}
+              className="hover:bg-gray-100"
+            >
               {stockAttributes.map((attr) => (
                 <td
-                  key={attr.label}
+                  key={attr.label + attr.key}
                   className={`py-2 px-4 border-b text-black font-bold text-right ${
                     attr.isChange
                       ? Number(attr.value(stock)) < 0
