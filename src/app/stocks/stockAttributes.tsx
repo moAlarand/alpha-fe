@@ -1,6 +1,6 @@
 import moment from "moment";
 
-import { createClient } from "utils/supabase/client";
+import { supabase } from "utils/supabase/client";
 
 import { getStrongRecommendation } from "./recomandation";
 import { Stock, Technical } from "./types";
@@ -106,7 +106,6 @@ export const stockAttributes = [
           stock.key ? "red" : "green"
         }-500 text-white px-5 py-3 rounded`}
         onClick={async () => {
-          const supabase = createClient();
           try {
             if (stock.key) {
               await supabase.from("stocks").delete().eq("key", stock.key);

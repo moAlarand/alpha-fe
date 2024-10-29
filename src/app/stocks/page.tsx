@@ -7,7 +7,7 @@ import { stockAttributes } from "./stockAttributes";
 import { getEGXAllStockData } from "../api";
 import { getStrongRecommendation } from "./recomandation";
 import Link from "next/link";
-import { createClient } from "../../utils/supabase/client";
+import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
 
 export default function Home() {
@@ -30,7 +30,6 @@ export default function Home() {
 
   // my stock
   const getUserStocks = async () => {
-    const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -57,7 +56,6 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
-      const supabase = createClient();
       const { data } = await supabase.from("profiles").select("*");
       setProfile(data?.[0]);
       console.log("🚀 ~ data:", data);
