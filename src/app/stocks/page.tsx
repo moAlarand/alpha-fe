@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
+import { sendNotification } from "./notification";
 
 export default function Home() {
   const [profile, setProfile] = useState<{
@@ -33,7 +34,7 @@ export default function Home() {
       // Fetch stocks with currentRecommend from the database
       const { data: dbStocks, error: dbError } = await supabase
         .from("stocks")
-        .select("Id, currentRecommend");
+        .select("*");
 
       if (dbError) throw dbError;
 
@@ -43,6 +44,7 @@ export default function Home() {
         const recommendation = getStrongRecommendation(stock); // Get new recommendation
         if (dbStock && dbStock.currentRecommend !== recommendation) {
           updateCurrentRecommend(stock.Id, recommendation); // Only update if recommendation has changed
+          sendNotification(dbStock, recommendation);
         }
       });
 

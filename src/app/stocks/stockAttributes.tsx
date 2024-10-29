@@ -4,8 +4,9 @@ import { supabase } from "utils/supabase/client";
 
 import { getStrongRecommendation } from "./recomandation";
 import { Stock, Technical } from "./types";
+import { sendNotification } from "./notification";
 
-const StockTechnicalStatusTranslate = {
+export const StockTechnicalStatusTranslate = {
   [Technical.NEUTRAL]: "محايد",
   [Technical.BUY]: "شراء",
   [Technical.SELL]: "بيع",
@@ -117,6 +118,8 @@ export const stockAttributes = [
               stock.prevRecommend = recommend;
               stock.currentRecommend = recommend;
               await supabase.from("stocks").insert(stock);
+
+              sendNotification(stock, recommend);
             }
           } catch (e) {
             console.log("🚀 ~ onClick={ ~ e:", e);
