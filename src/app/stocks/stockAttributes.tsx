@@ -1,8 +1,9 @@
 import moment from "moment";
 
+import { createClient } from "utils/supabase/client";
+
 import { getStrongRecommendation } from "./recomandation";
 import { Stock, Technical } from "./types";
-import { createClient } from "utils/supabase/client";
 
 const StockTechnicalStatusTranslate = {
   [Technical.NEUTRAL]: "محايد",
@@ -111,9 +112,11 @@ export const stockAttributes = [
               await supabase.from("stocks").delete().eq("key", stock.key);
             } else {
               stock.amount = Number(prompt("عدد الاسهم"));
-              stock.key = new Date().getMilliseconds();
+              stock.key = new Date().getTime();
               stock.purchasePrice = stock.Last;
-              stock.prevRecommend = getStrongRecommendation(stock);
+              const recommend = getStrongRecommendation(stock);
+              stock.prevRecommend = recommend;
+              stock.currentRecommend = recommend;
               await supabase.from("stocks").insert(stock);
             }
           } catch (e) {

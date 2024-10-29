@@ -56,6 +56,8 @@ export interface Stock {
   purchasePrice: number;
   // owner of stocks
   user_id: string;
-  //prev Recommend
+  // prev Recommend
   prevRecommend: Technical;
+  // current Recommend
+  currentRecommend: Technical;
 }
