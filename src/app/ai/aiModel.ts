@@ -184,15 +184,18 @@ export const updateModel = async (newData: {
 };
 
 // Function to make predictions and return "win" or "loss"
-export const predictWinOrLoss = async (stock: Stock): Promise<"win" | "loss"> => {
-
-  const prepareData = prepareTrainingData([stock])
+export const predictWinOrLoss = async (
+  stock: Stock
+): Promise<"win" | "loss" | "loading"> => {
+  const prepareData = prepareTrainingData([stock]);
   if (!modelInstance) {
-    throw new Error("Model is not initialized. Please initialize the model first.");
+    return "loading";
   }
 
   // Make predictions using the model
-  const prediction = modelInstance.predict(tf.tensor2d(prepareData.inputs)) as tf.Tensor;
+  const prediction = modelInstance.predict(
+    tf.tensor2d(prepareData.inputs)
+  ) as tf.Tensor;
 
   // Extract the first prediction value (assuming binary classification)
   const predictedValue = prediction.dataSync()[0];
