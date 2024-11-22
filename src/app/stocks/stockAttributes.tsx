@@ -101,12 +101,12 @@ export const stockAttributes = [
 
   {
     label: "توقع الذكاء الصناعي",
-    value: (stock: Stock) => {
-      const result = predictWinOrLoss(stock)
-    
+    value: async (stock: Stock) => {
+      const result = await predictWinOrLoss(stock);
+
       return (
-        <span style={{ color:result == "Win"?"green":"red" }}>
-          {result} 
+        <span style={{ color: result === "win" ? "green" : "red" }}>
+          {result} {result === "win" ? "↑" : "↓"}
         </span>
       );
     },
