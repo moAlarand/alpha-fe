@@ -14,15 +14,13 @@ export async function login(formData: FormData) {
     password: formData.get("password") as string,
   };
 
-  console.log(data);
+  if (process.env.NODE_ENV !== "development") {
+    const { error } = await supabase.auth.signInWithPassword(data);
 
-  const { error } = await supabase.auth.signInWithPassword(data);
-  console.log("🚀 ~ login ~ error:", error?.cause);
-
-  if (error) {
-    redirect(`/error?message=${error.message}`);
+    if (error) {
+      redirect(`/error?message=${error.message}`);
+    }
   }
-
   revalidatePath("/", "layout");
   redirect("/stocks");
 }

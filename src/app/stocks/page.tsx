@@ -13,6 +13,7 @@ import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
 import { sendNotification } from "./notification";
+import { useTrainAndUpdateModel } from "app/ai/aiModel";
 
 export default function Home() {
   const [profile, setProfile] = useState<{
@@ -25,7 +26,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
+  useTrainAndUpdateModel(stocks);
   // Function to fetch stock data
   const fetchStockData = async () => {
     try {
