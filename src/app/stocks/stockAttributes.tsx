@@ -1,9 +1,10 @@
+"use client";
 import moment from "moment";
 import { supabase } from "utils/supabase/client";
 import { getStrongRecommendation } from "./recomandation";
 import { Stock, Technical } from "./types";
 import { sendNotification } from "./notification";
-import {predictWinOrLoss} from "../ai/aiModel"
+import { predictWinOrLoss } from "../ai/aiModel";
 
 export const StockTechnicalStatusTranslate = {
   [Technical.NEUTRAL]: "محايد",
@@ -99,19 +100,19 @@ export const stockAttributes = [
     key: "profitLoss",
   },
 
-  {
-    label: "توقع الذكاء الصناعي",
-    value: async (stock: Stock) => {
-      const result = await predictWinOrLoss(stock);
+  // {
+  //   label: "توقع الذكاء الصناعي",
+  //   value: async (stock: Stock) => {
+  //     const result = await predictWinOrLoss(stock);
 
-      return (
-        <span style={{ color: result === "win" ? "green" : "red" }}>
-          {result} {result === "win" ? "↑" : "↓"}
-        </span>
-      );
-    },
-    key: "api_expected",
-  },
+  //     return (
+  //       <span style={{ color: result === "win" ? "green" : "red" }}>
+  //         {result} {result === "win" ? "↑" : "↓"}
+  //       </span>
+  //     );
+  //   },
+  //   key: "api_expected",
+  // },
 
   {
     label: "العمليه",

@@ -1,3 +1,4 @@
+"use client";
 import * as tf from "@tensorflow/tfjs";
 import { useEffect, useState } from "react";
 import { Stock, Technical } from "app/stocks/types";
@@ -65,7 +66,7 @@ export const saveModel = async () => {
         { type: "application/json" }
       );
 
-      const weightDataBlob = new Blob([JSON.stringify(artifacts.weightData)], {
+      const weightDataBlob = new Blob([artifacts.weightData], {
         type: "application/octet-stream",
       });
 
@@ -113,18 +114,24 @@ export const loadModel = async () => {
   try {
     const { data: modelJsonData, error: modelJsonError } =
       await supabase.storage.from("models").download("model.json");
+    console.log("🚀 ~ loadModel ~ data:", modelJsonData);
 
     const { data: modelWeightsData, error: weightsError } =
       await supabase.storage.from("models").download("model.weights.bin");
+    console.log("🚀 ~ loadModel ~ data:", modelWeightsData);
 
     if (modelJsonError || weightsError) {
+      console.log("🚀 ~ loadModel ~ weightsError:", weightsError);
+      console.log("🚀 ~ loadModel ~ modelJsonError:", modelJsonError);
       throw new Error("Error downloading model files from Supabase");
     }
 
     const modelJson = new File([modelJsonData!], "model.json", {
       type: "application/json",
     });
+    console.log("🚀 ~ loadModel ~ modelJson:1", modelJson);
     const modelWeights = new File([modelWeightsData!], "model.weights.bin");
+    console.log("🚀 ~ loadModel ~ modelWeights:2", modelWeights);
 
     const model = await tf.loadLayersModel(
       tf.io.browserFiles([modelJson, modelWeights])
