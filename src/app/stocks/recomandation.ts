@@ -1,5 +1,5 @@
 import { supabase } from "utils/supabase/client";
-import { Stock, Technical } from "./types";
+import { Recommendation, Stock, Technical } from "./types";
 
 export const getStrongRecommendation = (stock: Stock): Technical => {
   const {
@@ -84,7 +84,7 @@ export const getStrongRecommendation = (stock: Stock): Technical => {
 // Function to update currentRecommend in Supabase
 export const updateCurrentRecommend = async (
   stockId: string,
-  newRecommendation: Technical
+  newRecommendation: Recommendation | undefined
 ) => {
   console.log("🚀 ~ newRecommendation:", newRecommendation);
   try {

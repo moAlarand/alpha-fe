@@ -1,10 +1,10 @@
-import { StockTechnicalStatusTranslate } from "./stockAttributes";
-import { Stock, Technical } from "./types";
+import { Recommendation, Stock } from "./types";
 
 export const sendNotification = async (
   stock: Stock,
-  newRecommend: Technical
+  newRecommend?: Recommendation
 ) => {
+  if (!newRecommend) return;
   await Notification.requestPermission().then((result) => {
     if (result === "granted") {
       const profitLoss = (stock.Last - stock.purchasePrice) * stock.amount;
@@ -13,7 +13,7 @@ export const sendNotification = async (
         : profitLoss.toFixed(2);
 
       const notification = new Notification("تنبيه هااااام", {
-        body: `السهم: ${stock.Name}\n الرمز: ${stock.Symbol} -- العدد: ${stock.amount}\n المقترح: ${StockTechnicalStatusTranslate[newRecommend]}\nالربح والخسارة : ${formattedProfitLoss} \n-- `,
+        body: `السهم: ${stock.Name}\n الرمز: ${stock.Symbol} -- العدد: ${stock.amount}\n المقترح: ${newRecommend}}\nالربح والخسارة : ${formattedProfitLoss} \n-- `,
         icon: "../images/alpha.webp",
       });
       // Add a click event listener to the notification

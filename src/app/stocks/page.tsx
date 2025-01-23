@@ -1,19 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import alphaLogo from "../images/alpha.webp";
-import { Stock, Technical } from "./types";
+import { Stock } from "./types";
 import Image from "next/image";
 import { stockAttributes } from "./stockAttributes";
 import { getEGXAllStockData } from "../api";
-import {
-  getStrongRecommendation,
-  updateCurrentRecommend,
-} from "./recomandation";
+import { updateCurrentRecommend } from "./recomandation";
 import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
 import { sendNotification } from "./notification";
-import { useTrainAndUpdateModel } from "app/ai/aiModel";
+import {
+  getAIStoredRecommendations,
+  getRecommendationFromChatGpt,
+} from "app/ai/chatgpt";
+// import { useTrainAndUpdateModel } from "app/ai/aiModel";
 
 export default function Home() {
   const [profile, setProfile] = useState<{
@@ -21,17 +22,21 @@ export default function Home() {
     id: string;
     avatar_url: string;
   } | null>(null);
+  const [loading, setLoading] = useState(false);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<Stock[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  useTrainAndUpdateModel(stocks);
+  // useTrainAndUpdateModel(stocks);
   // Function to fetch stock data
   const fetchStockData = async () => {
     try {
       const data: Stock[] = await getEGXAllStockData();
       setStocks(data);
+      // ai stocks from storage getAIStoredRecommendations
+      const aiStocks = getAIStoredRecommendations();
+      console.log("🚀 ~ fetchStockData ~ aiStocks:", aiStocks?.length);
       // Fetch stocks with currentRecommend from the database
       const { data: dbStocks, error: dbError } = await supabase
         .from("stocks")
@@ -41,8 +46,13 @@ export default function Home() {
 
       // Update each stock's recommendation if there's a change
       data.forEach((stock) => {
+        const aiStock = aiStocks?.find((s) => s.Id === stock.Id); // ai stock
+        stock.AIRecommend = aiStock?.AIRecommend;
+        stock.Forecast = aiStock?.Forecast;
+        stock.Confidence = aiStock?.Confidence;
+        stock.ExpectedProfit = aiStock?.ExpectedProfit;
         const dbStock = dbStocks?.find((s) => s.Id === stock.Id);
-        const recommendation = getStrongRecommendation(stock); // Get new recommendation
+        const recommendation = stock.AIRecommend; // Get new recommendation
         if (dbStock && dbStock.currentRecommend !== recommendation) {
           updateCurrentRecommend(stock.Id, recommendation); // Only update if recommendation has changed
           sendNotification(dbStock, recommendation);
@@ -85,7 +95,6 @@ export default function Home() {
     (async () => {
       const { data } = await supabase.from("profiles").select("*");
       setProfile(data?.[0]);
-      console.log("🚀 ~ data:", data);
     })();
   }, []);
 
@@ -142,6 +151,12 @@ export default function Home() {
     setFilteredStocks(sorted);
   };
 
+  const _getAiRecomandation = async () => {
+    setLoading(true);
+    await getRecommendationFromChatGpt(stocks);
+    await fetchStockData();
+    setLoading(false);
+  };
   // Reset filter and sorting
   const handleReset = () => {
     setSearch("");
@@ -150,28 +165,28 @@ export default function Home() {
     setFilteredStocks(stocks); // Reset filtered stocks to the full list
   };
 
-  const handleRecommendedToBuy = () => {
-    setSearch("");
-    setSortBy(null);
-    setSortDirection("asc");
+  // const handleRecommendedToBuy = () => {
+  //   setSearch("");
+  //   setSortBy(null);
+  //   setSortDirection("asc");
 
-    setFilteredStocks(
-      stocks.filter(
-        (stock) => getStrongRecommendation(stock) === Technical.STRONG_BUY
-      )
-    );
-  };
+  //   setFilteredStocks(
+  //     stocks.filter(
+  //       (stock) => getStrongRecommendation(stock) === Technical.STRONG_BUY
+  //     )
+  //   );
+  // };
 
-  const handleRecommendedToSell = () => {
-    setSearch("");
-    setSortBy(null);
-    setSortDirection("asc");
-    setFilteredStocks(
-      stocks.filter(
-        (stock) => getStrongRecommendation(stock) === Technical.STRONG_SELL
-      )
-    );
-  };
+  // const handleRecommendedToSell = () => {
+  //   setSearch("");
+  //   setSortBy(null);
+  //   setSortDirection("asc");
+  //   setFilteredStocks(
+  //     stocks.filter(
+  //       (stock) => getStrongRecommendation(stock) === Technical.STRONG_SELL
+  //     )
+  //   );
+  // };
 
   return (
     <div
@@ -208,17 +223,23 @@ export default function Home() {
 
         <button
           className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={loading ? undefined : _getAiRecomandation}
+        >
+          {loading ? "loading..." : "AI Start"}
+        </button>
+        {/* 
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded"
           onClick={handleRecommendedToBuy}
         >
           توصيات بالشراء
         </button>
-
         <button
           className="bg-red-500 text-white px-4 py-2 rounded"
           onClick={handleRecommendedToSell}
         >
           توصيات بالبيع
-        </button>
+        </button> */}
 
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded"
@@ -226,7 +247,6 @@ export default function Home() {
         >
           اسهمي
         </button>
-
         {/* Reset button */}
         <button
           className="bg-red-500 text-white px-4 py-2 rounded"
@@ -266,17 +286,18 @@ export default function Home() {
               {stockAttributes.map((attr) => (
                 <td
                   key={attr.label + attr.key}
-                  className={`py-2 px-4 border-b text-black font-bold text-right ${
-                    attr.isChange
-                      ? Number(attr.value(stock)) < 0
-                        ? "text-red-500"
-                        : Number(attr.value(stock)) > 0
-                        ? "text-green-500"
-                        : ""
-                      : ""
-                  }`}
+                  className={`py-2 px-4 border-b text-black font-bold text-right`}
+                  //   ${
+                  //   attr.isChange
+                  //     ? Number(attr.value(stock)) < 0
+                  //       ? "text-red-500"
+                  //       : Number(attr.value(stock)) > 0
+                  //       ? "text-green-500"
+                  //       : ""
+                  //     : ""
+                  // }`}
                 >
-                  {attr.isChange ? (attr.isPercentage ? " % " : " ج ") : ""}
+                  {/* {attr.isChange ? (attr.isPercentage ? " % " : " ج ") : ""} */}
                   {attr.value(stock, getUserStocks)}
                 </td>
               ))}

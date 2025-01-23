@@ -1,8 +1,15 @@
 export enum Recommendation {
-  SEll = "sell",
+  SEll = "Sell",
   Buy = "Buy",
-  Both = "Both",
-  NONE = "NONE",
+  Strong_Buy = "Strong Buy",
+  HOLD = "Hold",
+  Strong_Sell = "Strong Sell",
+}
+
+export enum Forecast {
+  Up = "Up",
+  Down = "Down",
+  Stable = "Stable",
 }
 
 export enum Technical {
@@ -39,7 +46,7 @@ export interface Stock {
   PerformanceWeek: number; // 0;
   PerformanceYear: number; //111.57;
   PerformanceYtd: number; // 10.51;
-  Symbol: number; //'ROTO';
+  Symbol: string; //'ROTO';
   TechnicalDay: Technical;
   TechnicalHour: Technical;
   TechnicalMonth: Technical;
@@ -57,7 +64,13 @@ export interface Stock {
   // owner of stocks
   user_id: string;
   // prev Recommend
-  prevRecommend: Technical;
+  prevRecommend?: Recommendation;
   // current Recommend
-  currentRecommend: Technical;
+  currentRecommend?: Recommendation;
+
+  // recomandation by chatGpt
+  AIRecommend?: Recommendation;
+  Forecast?: Forecast;
+  Confidence?: string;
+  ExpectedProfit?: number;
 }
