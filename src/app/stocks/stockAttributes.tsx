@@ -104,7 +104,7 @@ export const stockAttributes = [
       return (
         <span
           style={{
-            color: Number(stock.ExpectedProfit) > 0 ? "green" : "red",
+            color: Number(stock.ExpectedProfit || 0) > 0 ? "green" : "red",
           }}
         >
           {stock.ExpectedProfit || 0}
