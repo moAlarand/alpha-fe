@@ -9,11 +9,12 @@ import { updateCurrentRecommend } from "./recomandation";
 import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
-import { sendNotification } from "./notification";
+// import { sendNotification } from "./notification";
 import {
   getAIStoredRecommendations,
   getRecommendationFromChatGpt,
 } from "app/ai/chatgpt";
+import { getTopStocksToBuy, getTopStocksToSell } from "utils";
 // import { useTrainAndUpdateModel } from "app/ai/aiModel";
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isMyOwnStocks, setIsMyOwnStocks] = useState(false);
   // useTrainAndUpdateModel(stocks);
   // Function to fetch stock data
   const fetchStockData = async () => {
@@ -41,6 +43,7 @@ export default function Home() {
       const { data: dbStocks, error: dbError } = await supabase
         .from("stocks")
         .select("*");
+      console.log("🚀 ~ fetchStockData ~ dbStocks:", dbStocks);
 
       if (dbError) throw dbError;
 
@@ -55,7 +58,7 @@ export default function Home() {
         const recommendation = stock.AIRecommend; // Get new recommendation
         if (dbStock && dbStock.currentRecommend !== recommendation) {
           updateCurrentRecommend(stock.Id, recommendation); // Only update if recommendation has changed
-          sendNotification(dbStock, recommendation);
+          // sendNotification(dbStock, recommendation);
         }
       });
 
@@ -74,6 +77,7 @@ export default function Home() {
       .from("stocks")
       .select("*")
       .eq("user_id", user?.id);
+    setIsMyOwnStocks(!!myStocks?.length);
     setFilteredStocks(
       (myStocks as Stock[]).map((s) => {
         const nS = stocks.find((fs) => s.Id === fs.Id);
@@ -93,8 +97,15 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("profiles").select("*");
-      setProfile(data?.[0]);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { data } = await supabase
+        .from("profiles")
+        .select(`id,full_name, username, avatar_url`)
+        .eq("id", user?.id)
+        .single();
+      setProfile(data);
     })();
   }, []);
 
@@ -162,51 +173,62 @@ export default function Home() {
     setSearch("");
     setSortBy(null);
     setSortDirection("asc");
+    setIsMyOwnStocks(false);
     setFilteredStocks(stocks); // Reset filtered stocks to the full list
   };
 
-  // const handleRecommendedToBuy = () => {
-  //   setSearch("");
-  //   setSortBy(null);
-  //   setSortDirection("asc");
+  const handleRecommendedToBuy = async () => {
+    setSearch("");
+    setSortBy(null);
+    setSortDirection("asc");
+    await _getAiRecomandation();
+    setFilteredStocks(getTopStocksToBuy(stocks));
+  };
 
-  //   setFilteredStocks(
-  //     stocks.filter(
-  //       (stock) => getStrongRecommendation(stock) === Technical.STRONG_BUY
-  //     )
-  //   );
-  // };
-
-  // const handleRecommendedToSell = () => {
-  //   setSearch("");
-  //   setSortBy(null);
-  //   setSortDirection("asc");
-  //   setFilteredStocks(
-  //     stocks.filter(
-  //       (stock) => getStrongRecommendation(stock) === Technical.STRONG_SELL
-  //     )
-  //   );
-  // };
+  const handleRecommendedToSell = () => {
+    setSearch("");
+    setSortBy(null);
+    setSortDirection("asc");
+    setFilteredStocks(getTopStocksToSell(filteredStocks));
+  };
 
   return (
     <div
       className="container mx-auto p-4 bg-white border text-black  overflow-x-auto"
       dir="rtl"
     >
-      <div className="flex justify-end ">
-        <Link href={"/account"}>
-          <Avatar
-            uid={profile?.id ?? null}
-            url={profile?.avatar_url ?? null}
-            size={60}
-          />
-        </Link>
-      </div>
-      <div className="flex justify-center">
-        <div className="flex justify-center">
-          <h3 className="text-4xl font-bold text-right">السوق المصري </h3>
+      {/* Overlay Loading */}
+      {loading && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="animate-spin border-t-4 border-white w-16 h-16 rounded-full"></div>
         </div>
-        <Image src={alphaLogo} alt="Alpha Logo" className="h-40 w-40" />
+      )}
+      <div className="flex">
+        <div className="flex">
+          <Link href={"/account"}>
+            <Avatar
+              uid={profile?.id ?? null}
+              url={profile?.avatar_url ?? null}
+              size={60}
+            />
+          </Link>
+          <div className="flex justify-center">
+            <div className="flex justify-center">
+              <Image src={alphaLogo} alt="Alpha Logo" className="h-20 w-20" />
+              <div>
+                <h3 className="text-4xl font-bold text-right">السوق المصري </h3>
+
+                <h1 className="text-1xl font-bold mb-4 text-right">
+                  ثبات نسبي في السوق من (من 12:00 ظهرًا إلى 1:30 مساءً)
+                </h1>
+                <h1 className="text-1xl font-bold mb-2 text-right">
+                  تقلب (من 10:00 صباحًا إلى 11:00 صباحًا)و(من 2:30 إلى 3:00
+                  مساءً)
+                </h1>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <h1 className="text-3xl font-bold mb-4 text-right">بيانات الأسهم</h1>
@@ -227,20 +249,23 @@ export default function Home() {
         >
           {loading ? "loading..." : "AI Start"}
         </button>
-        {/* 
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded"
-          onClick={handleRecommendedToBuy}
-        >
-          توصيات بالشراء
-        </button>
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded"
-          onClick={handleRecommendedToSell}
-        >
-          توصيات بالبيع
-        </button> */}
 
+        {!isMyOwnStocks && (
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded"
+            onClick={handleRecommendedToBuy}
+          >
+            توصيات بالشراء
+          </button>
+        )}
+        {isMyOwnStocks && (
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded"
+            onClick={handleRecommendedToSell}
+          >
+            توصيات بالبيع
+          </button>
+        )}
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded"
           onClick={getUserStocks}
@@ -264,7 +289,7 @@ export default function Home() {
               <th
                 key={attr.label + attr.key}
                 onClick={() => handleSort(attr.key as keyof Stock)}
-                className={`py-2 px-4 border-b text-gray-700 text-right cursor-pointer ${
+                className={`py-2 px-4 border-b text-gray-700 text-center cursor-pointer ${
                   sortBy === attr.key
                     ? sortDirection === "asc"
                       ? "bg-blue-100"
