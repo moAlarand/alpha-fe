@@ -173,7 +173,7 @@ export const stockAttributes = [
   },
   {
     label: "العمليه",
-    value: (stock: Stock, refresh: () => void) => (
+    value: (stock: Stock, onRefresh: () => void) => (
       <button
         className={`bg-${
           stock.key ? "red" : "green"
@@ -181,22 +181,36 @@ export const stockAttributes = [
         onClick={async () => {
           try {
             if (stock.key) {
-              await supabase.from("stocks").delete().eq("key", stock.key);
+              const result = await supabase
+                .from("stocks")
+                .delete()
+                .eq("key", stock.key);
+              if (result.status === 204) {
+                sendNotification(
+                  stock,
+                  stock.currentRecommend,
+                  "تم البيع بنجاح"
+                );
+                onRefresh?.();
+              }
             } else {
-              stock.amount = Number(prompt("عدد الاسهم"));
-              stock.key = new Date().getTime();
-              stock.purchasePrice = stock.Last;
-              const recommend = stock.AIRecommend;
-              stock.prevRecommend = recommend;
-              stock.currentRecommend = recommend;
-              await supabase.from("stocks").insert(stock);
-
-              sendNotification(stock, recommend);
+              const stocksAmount = Number(prompt("عدد الاسهم"));
+              if (!stocksAmount && isNaN(stock.amount)) return;
+              const newStock = { ...stock };
+              newStock.amount = stocksAmount;
+              newStock.key = new Date().getTime();
+              newStock.purchasePrice = newStock.Last;
+              const recommend = newStock.AIRecommend;
+              newStock.prevRecommend = recommend;
+              newStock.currentRecommend = recommend;
+              const result = await supabase.from("stocks").insert(newStock);
+              console.log("🚀 ~ onClick={ ~ result:", result);
+              if (result.status === 201)
+                sendNotification(newStock, recommend, "تم الشراء بنجاح");
             }
           } catch (e) {
             console.log("🚀 ~ onClick={ ~ e:", e);
           }
-          if (refresh) refresh();
         }}
       >
         {stock.amount ? "بيع" : "شراء"}

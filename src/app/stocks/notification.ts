@@ -2,7 +2,8 @@ import { Recommendation, Stock } from "./types";
 
 export const sendNotification = async (
   stock: Stock,
-  newRecommend?: Recommendation
+  newRecommend?: Recommendation,
+  title?: string
 ) => {
   if (!newRecommend) return;
   await Notification.requestPermission().then((result) => {
@@ -12,7 +13,7 @@ export const sendNotification = async (
         ? "-"
         : profitLoss.toFixed(2);
 
-      const notification = new Notification("تنبيه هااااام", {
+      const notification = new Notification(title || "تنبيه هااااام", {
         body: `السهم: ${stock.Name}\n الرمز: ${stock.Symbol} -- العدد: ${stock.amount}\n المقترح: ${newRecommend}}\nالربح والخسارة : ${formattedProfitLoss} \n-- `,
         icon: "../images/alpha.webp",
       });
