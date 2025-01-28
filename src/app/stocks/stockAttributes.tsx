@@ -144,7 +144,7 @@ export const stockAttributes = [
   {
     label: "اسهمي",
     value: (stock: Stock) => stock.amount || "-",
-    key: "myAmount",
+    key: "amount",
   },
 
   {

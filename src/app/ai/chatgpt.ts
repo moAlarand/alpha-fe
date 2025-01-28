@@ -61,7 +61,7 @@ export async function getRecommendationFromChatGpt(
     // Utility function to interact with ChatGPT
     const _chat = async (prompt: string): Promise<Stock[]> => {
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
       });
 

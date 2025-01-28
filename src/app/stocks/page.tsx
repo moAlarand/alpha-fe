@@ -181,7 +181,6 @@ export default function Home() {
     setSearch("");
     setSortBy(null);
     setSortDirection("asc");
-    await _getAiRecomandation();
     setFilteredStocks(getTopStocksToBuy(stocks));
   };
 
