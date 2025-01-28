@@ -38,13 +38,10 @@ export default function Home() {
       setStocks(data);
       // ai stocks from storage getAIStoredRecommendations
       const aiStocks = getAIStoredRecommendations();
-      console.log("🚀 ~ fetchStockData ~ aiStocks:", aiStocks?.length);
       // Fetch stocks with currentRecommend from the database
       const { data: dbStocks, error: dbError } = await supabase
         .from("stocks")
         .select("*");
-      console.log("🚀 ~ fetchStockData ~ dbStocks:", dbStocks);
-
       if (dbError) throw dbError;
 
       // Update each stock's recommendation if there's a change
@@ -53,7 +50,7 @@ export default function Home() {
         stock.AIRecommend = aiStock?.AIRecommend;
         stock.Forecast = aiStock?.Forecast;
         stock.Confidence = aiStock?.Confidence;
-        stock.ExpectedProfit = aiStock?.ExpectedProfit;
+        stock.ExpectedProfit = aiStock?.ExpectedProfit || 0;
         const dbStock = dbStocks?.find((s) => s.Id === stock.Id);
         const recommendation = stock.AIRecommend; // Get new recommendation
         if (dbStock && dbStock.currentRecommend !== recommendation) {

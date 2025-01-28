@@ -7,7 +7,7 @@ export function getTopStocksToBuy(data: Stock[]): Stock[] {
   const lastIndexOfTop = data.findLastIndex(
     (a) => a.ExpectedProfit == sortedStocks[0].ExpectedProfit
   );
-  return sortedStocks.slice(0, lastIndexOfTop);
+  return sortedStocks.slice(0, lastIndexOfTop + 1);
 }
 
 export function getTopStocksToSell(data: Stock[]): Stock[] {
