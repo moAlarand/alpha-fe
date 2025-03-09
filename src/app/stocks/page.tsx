@@ -9,11 +9,6 @@ import { updateCurrentRecommend } from "./recomandation";
 import Link from "next/link";
 import { supabase } from "../../utils/supabase/client";
 import Avatar from "app/account/avatar";
-// import { sendNotification } from "./notification";
-import {
-  getAIStoredRecommendations,
-  getRecommendationFromChatGpt,
-} from "app/ai/chatgpt";
 import { getTopStocksToBuy, getTopStocksToSell } from "utils";
 // import { useTrainAndUpdateModel } from "app/ai/aiModel";
 
@@ -36,8 +31,6 @@ export default function Home() {
     try {
       const data: Stock[] = await getEGXAllStockData();
       setStocks(data);
-      // ai stocks from storage getAIStoredRecommendations
-      const aiStocks = getAIStoredRecommendations();
       // Fetch stocks with currentRecommend from the database
       const { data: dbStocks, error: dbError } = await supabase
         .from("stocks")
@@ -46,11 +39,6 @@ export default function Home() {
 
       // Update each stock's recommendation if there's a change
       data.forEach((stock) => {
-        const aiStock = aiStocks?.find((s) => s.Id === stock.Id); // ai stock
-        stock.AIRecommend = aiStock?.AIRecommend;
-        stock.Forecast = aiStock?.Forecast;
-        stock.Confidence = aiStock?.Confidence;
-        stock.ExpectedProfit = aiStock?.ExpectedProfit || 0;
         const dbStock = dbStocks?.find((s) => s.Id === stock.Id);
         const recommendation = stock.AIRecommend; // Get new recommendation
         if (dbStock && dbStock.currentRecommend !== recommendation) {
@@ -161,7 +149,6 @@ export default function Home() {
 
   const _getAiRecomandation = async () => {
     setLoading(true);
-    await getRecommendationFromChatGpt(stocks);
     await fetchStockData();
     setLoading(false);
   };
